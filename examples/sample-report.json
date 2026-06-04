@@ -1,0 +1,157 @@
+{
+  "tool": "actionbudget",
+  "version": "0.1.0",
+  "generatedAt": "2026-06-04T06:23:23.712Z",
+  "summary": {
+    "workflows": 2,
+    "score": 82,
+    "grade": "B",
+    "errors": 0,
+    "warnings": 6,
+    "infos": 6,
+    "totalWaste": 200
+  },
+  "workflows": [
+    {
+      "source": "examples/.github/workflows/lean.yml",
+      "name": "Lean CI",
+      "score": 100,
+      "grade": "A",
+      "counts": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "findings": []
+    },
+    {
+      "source": "examples/.github/workflows/wasteful.yml",
+      "name": "Wasteful CI",
+      "score": 64,
+      "grade": "D",
+      "counts": {
+        "error": 0,
+        "warning": 6,
+        "info": 6
+      },
+      "findings": [
+        {
+          "rule": "no-concurrency",
+          "severity": "warning",
+          "title": "No concurrency group — superseded runs keep running",
+          "message": "This push/PR workflow has no top-level `concurrency`, so a new commit doesn't cancel the previous run.",
+          "line": 4,
+          "waste": 30,
+          "fix": "Add:\nconcurrency:\n  group: ${{ github.workflow }}-${{ github.ref }}\n  cancel-in-progress: true"
+        },
+        {
+          "rule": "missing-cache",
+          "severity": "warning",
+          "job": "test",
+          "title": "setup-node without dependency caching",
+          "message": "Job \"test\" runs setup-node without `cache`, reinstalling dependencies every run.",
+          "line": 20,
+          "waste": 25,
+          "fix": "Enable caching, e.g. add `with: { cache: 'npm' }` to the setup-node step."
+        },
+        {
+          "rule": "missing-cache",
+          "severity": "warning",
+          "job": "mac-build",
+          "title": "setup-node without dependency caching",
+          "message": "Job \"mac-build\" runs setup-node without `cache`, reinstalling dependencies every run.",
+          "line": 30,
+          "waste": 25,
+          "fix": "Enable caching, e.g. add `with: { cache: 'npm' }` to the setup-node step."
+        },
+        {
+          "rule": "duplicate-triggers",
+          "severity": "warning",
+          "title": "push + pull_request run CI twice per PR commit",
+          "message": "Both `push` and `pull_request` fire, and `push` has no branch filter — so each PR commit triggers two full runs.",
+          "line": 4,
+          "waste": 25,
+          "fix": "Limit push to your main branches:\non:\n  push:\n    branches: [main]\n  pull_request:"
+        },
+        {
+          "rule": "large-matrix",
+          "severity": "warning",
+          "job": "test",
+          "title": "Matrix expands to 12 jobs",
+          "message": "Job \"test\" fans out to 12 parallel jobs (node(4) × os-target(3)).",
+          "line": 10,
+          "waste": 24,
+          "detail": "Every combination pays full setup + install + the rest of the job.",
+          "fix": "Trim the matrix to the combinations you actually ship, or use `include` for the few extras."
+        },
+        {
+          "rule": "frequent-schedule",
+          "severity": "warning",
+          "title": "Schedule runs every ~5 min",
+          "message": "Cron \"*/5 * * * *\" fires roughly 288×/day — each run bills full runner time.",
+          "line": 6,
+          "waste": 20,
+          "fix": "Run less often (≥ every 15 min) unless the frequency is truly required."
+        },
+        {
+          "rule": "costly-runner",
+          "severity": "info",
+          "job": "mac-build",
+          "title": "macOS runner bills at 10× Linux",
+          "message": "Job \"mac-build\" uses a macOS runner, charged at 10× the Linux minute rate.",
+          "line": 26,
+          "waste": 18,
+          "fix": "Run on ubuntu-latest where possible, and reserve macOS for the few jobs that need it."
+        },
+        {
+          "rule": "no-timeout",
+          "severity": "info",
+          "job": "test",
+          "title": "Job has no timeout-minutes",
+          "message": "Job \"test\" can run up to GitHub's 360-minute default if it hangs.",
+          "line": 10,
+          "waste": 8,
+          "fix": "Add `timeout-minutes: 15` (or a sensible cap) to the job."
+        },
+        {
+          "rule": "no-timeout",
+          "severity": "info",
+          "job": "mac-build",
+          "title": "Job has no timeout-minutes",
+          "message": "Job \"mac-build\" can run up to GitHub's 360-minute default if it hangs.",
+          "line": 26,
+          "waste": 8,
+          "fix": "Add `timeout-minutes: 15` (or a sensible cap) to the job."
+        },
+        {
+          "rule": "no-path-filter",
+          "severity": "info",
+          "title": "`push` has no paths filter",
+          "message": "`push` runs the whole workflow even for changes that can't affect it (docs, README…).",
+          "line": 4,
+          "waste": 6,
+          "fix": "Add `paths:` (or `paths-ignore:`) so unrelated changes skip CI."
+        },
+        {
+          "rule": "no-path-filter",
+          "severity": "info",
+          "title": "`pull_request` has no paths filter",
+          "message": "`pull_request` runs the whole workflow even for changes that can't affect it (docs, README…).",
+          "line": 5,
+          "waste": 6,
+          "fix": "Add `paths:` (or `paths-ignore:`) so unrelated changes skip CI."
+        },
+        {
+          "rule": "full-history-checkout",
+          "severity": "info",
+          "job": "test",
+          "title": "checkout fetches full git history (fetch-depth: 0)",
+          "message": "Job \"test\" clones the entire history, which is slow on large repos.",
+          "line": 17,
+          "waste": 5,
+          "fix": "Drop `fetch-depth: 0` unless a step truly needs full history."
+        }
+      ]
+    }
+  ]
+}

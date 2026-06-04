@@ -1,0 +1,7 @@
+{
+  "disable": [],
+  "maxMatrixJobs": 6,
+  "requireTimeout": true,
+  "minScheduleMinutes": 15,
+  "minScore": 0
+}
